@@ -17,6 +17,6 @@ for key, value in json.items():
     if bool not in [type(key), type(value)]:
         if type(key) != bool:
             print(key)
-        if type(value) != bool:
+        elif type(value) != bool:
             print (value)
 

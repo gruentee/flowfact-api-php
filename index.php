@@ -10,8 +10,8 @@ require_once __DIR__ . '/vendor/autoload.php';
 define('API_BASE_URL', 'https://flowfactapi.flowfact.com/com.flowfact.server/api/rest/v1.0/');
 
 //$user = urlencode('301001/Klaus Erfölg');
-$user = '301001/Klaus Erfölg';
-$pw	  = 'P0werYourL1fe';
+$user = '301001/test';
+$pw	  = '123456';
 $headers = array(
     'Accept' => 'application/json',
 );
