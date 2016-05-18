@@ -1,7 +1,12 @@
 {
+  "name": "flowfact/flowfact-api-php",
+  "version": "0.1",
   "require": {
     "mashape/unirest-php": "^3.0",
     "nategood/httpful": "^0.2.20",
     "guzzlehttp/guzzle": "~6.0"
+  },
+  "autoload": {
+    "psr-4":  {"Flowfact\\": "src/Flowfact/"}
   }
 }
