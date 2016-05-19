@@ -11,10 +11,14 @@ define('BASE_URI', 'https://flowfactapi.flowfact.com/com.flowfact.server/api/res
 //$user = '301001/Klaus Erfölg';
 //$pw	  = 'P0werYourL1fe';
 
-$config = array(
+// TODO: maybe rework this in YAML and parse with Symfony YAML parser
+// TODO: maybe rename keys to to parsing more automatically
+return array(
     'test' => array(
-        'user' => 'test',
-        'password' => '123456'
+        'username' => 'test',
+        'password' => '123456',
+        'customer_id' => '301001',
+        'api_base_url' => 'https://flowfactapi.flowfact.com/com.flowfact.server/api/rest/v1.0/customers/'
     )
 );
 
