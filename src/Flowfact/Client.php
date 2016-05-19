@@ -8,12 +8,11 @@
 
 
 namespace Flowfact {
-
-    use Flowfact\Resources\Users;
     use Flowfact\Resources\UserType;
     use GuzzleHttp\Client as Http;
     use GuzzleHttp\Exception\RequestException;
     use GuzzleHttp\Psr7;
+    use JsonMapper;
 
     class Client
     {
@@ -52,16 +51,21 @@ namespace Flowfact {
         public function getUsers()
         {
             $url = strtolower(substr(__FUNCTION__, 3));
-//            $url = 'users';
+            $users = array();
             try {
                 $response = $this->client->get($url, $this->requestOptions);
-                // TODO: transform to array of User objects
-                return $response->getBody()->getContents();
+                $mapper = new \JsonMapper();
+                $users[] = $mapper->mapArray(json_decode($response->getBody()->getContents()), array(),
+                    '\Flowfact\Resources\UserType');
             } catch (RequestException $e) {
                 echo Psr7\str($e->getRequest());
                 if ($e->hasResponse()) {
                     echo Psr7\str($e->getResponse());
                 }
+            } catch (\JsonMapper_Exception $e) {
+                echo "Mapping JSON to objects failed <br />";
+            } finally {
+                return $users;
             }
         }
     }
