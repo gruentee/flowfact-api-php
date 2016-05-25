@@ -21,12 +21,12 @@ class UserShortType extends LinkType
     private $id = null;
 
     /**
-     * @property string $identifier
+     * @property string|null $identifier
      */
     private $identifier = null;
 
     /**
-     * @property string $internaldescription
+     * @property string|null $internaldescription
      */
     private $internaldescription = null;
 
@@ -41,7 +41,7 @@ class UserShortType extends LinkType
     private $headline = null;
 
     /**
-     * @property \Flowfact\Resources\LocationType $location
+     * @property \Flowfact\Resources\LocationType|null $location
      */
     private $location = null;
 
@@ -96,7 +96,7 @@ class UserShortType extends LinkType
     /**
      * Sets a new identifier
      *
-     * @param string $identifier
+     * @param string|null $identifier
      * @return self
      */
     public function setIdentifier($identifier)
@@ -118,7 +118,7 @@ class UserShortType extends LinkType
     /**
      * Sets a new internaldescription
      *
-     * @param string $internaldescription
+     * @param string|null $internaldescription
      * @return self
      */
     public function setInternaldescription($internaldescription)
@@ -140,7 +140,7 @@ class UserShortType extends LinkType
     /**
      * Sets a new keyword
      *
-     * @param string $keyword
+     * @param string|null $keyword
      * @return self
      */
     public function setKeyword($keyword)
@@ -162,7 +162,7 @@ class UserShortType extends LinkType
     /**
      * Sets a new headline
      *
-     * @param string $headline
+     * @param string|null $headline
      * @return self
      */
     public function setHeadline($headline)
@@ -184,7 +184,7 @@ class UserShortType extends LinkType
     /**
      * Sets a new location
      *
-     * @param \Flowfact\Resources\LocationType $location
+     * @param \Flowfact\Resources\LocationType|null $location
      * @return self
      */
     public function setLocation(\Flowfact\Resources\LocationType $location)
