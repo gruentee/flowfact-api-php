@@ -8,11 +8,16 @@
 
 
 namespace Flowfact {
+
+    use Doctrine\Instantiator\Exception\InvalidArgumentException;
+    use Flowfact\Resources\ContactType;
     use Flowfact\Resources\UserType;
     use GuzzleHttp\Client as Http;
     use GuzzleHttp\Exception\RequestException;
     use GuzzleHttp\Psr7;
     use JsonMapper;
+    use Monolog\Handler\StreamHandler;
+    use Monolog\Logger;
 
     class Client
     {
@@ -24,6 +29,7 @@ namespace Flowfact {
         private $client = null;
         private $headers = array();
         private $requestOptions = array();
+        private $logger = null;
 
         public function __construct($username, $password, $customerId, $baseUrl, $acceptFormat = 'json')
         {
@@ -42,6 +48,10 @@ namespace Flowfact {
             $this->client = new Http([
                 'base_uri' => $this->baseUrl
             ]);
+            // set up logger
+            $logger = new Logger('application_logger');
+            $logger->pushHandler(new StreamHandler(__DIR__.'/debug.log', Logger::DEBUG));
+            $this->logger = $logger;
         }
 
         /**
@@ -50,23 +60,82 @@ namespace Flowfact {
          */
         public function getUsers()
         {
-            $url = strtolower(substr(__FUNCTION__, 3));
+            $url = 'users';
             $users = array();
             try {
                 $response = $this->client->get($url, $this->requestOptions);
                 $mapper = new \JsonMapper();
-                $users[] = $mapper->mapArray(json_decode($response->getBody()->getContents()), array(),
-                    '\Flowfact\Resources\UserType');
+                $mapper->setLogger($this->logger);
+                $json = json_decode($response->getBody()->getContents());
+                // debug
+                $this->logger->addDebug('Parsing user', $json->value->user);
+                $users[] = $mapper->mapArray($json->value->user, array(), '\Flowfact\Resources\UserType');
             } catch (RequestException $e) {
                 echo Psr7\str($e->getRequest());
                 if ($e->hasResponse()) {
                     echo Psr7\str($e->getResponse());
                 }
             } catch (\JsonMapper_Exception $e) {
-                echo "Mapping JSON to objects failed <br />";
+                echo "Mapping JSON to Entity objects failed: <br />";
+                echo $e->getMessage();
+                echo $e->getTraceAsString();
             } finally {
                 return $users;
             }
+        }
+
+        /**
+         * Get a single user
+         * @param userId string
+         * @return UserType
+         * @throws \InvalidArgumentException
+         */
+        public function getUser($userId)
+        {
+            // TODO: validate on RegEx
+            if(empty($userId) || !is_string($userId))
+            {
+                throw new \InvalidArgumentException(__CLASS__.'::'.__FUNCTION__." requires parameter \$userId to be 
+                a string!");
+            }
+
+            return;
+        }
+
+
+        /**
+         * Get all contacts of a given user
+         * @param userId string
+         * @return ContactType[]
+         * @throws \InvalidArgumentException
+         */
+        public function getContactsByUser($userId)
+        {
+            // TODO: validate on RegEx
+            if(empty($userId) || !is_string($userId))
+            {
+                throw new \InvalidArgumentException(__CLASS__.'::'.__FUNCTION__." requires parameter \$userId to be 
+                a string!");
+            }
+
+
+        }
+
+        /**
+         *  Get Characteristics
+         * @param string|null $realm to filter the type of activities queried
+         * @throws \InvalidArgumentException
+         */
+        public function getCharacteristics($realm=null)
+        {
+            $realms = ['activities', 'estates', 'inquiries', 'contacs'];
+            if(!is_null($realm) && !in_array($realm, $realms))
+            {
+                throw new \InvalidArgumentException(__CLASS__.'::'.__FUNCTION__.' requires parameter $realm to be 
+                empty or one of string values ' . implode(', ', $realms));
+            }
+
+
         }
     }
 }

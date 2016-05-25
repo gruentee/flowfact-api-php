@@ -27,7 +27,7 @@ class ContactShortType extends BaseBusinessObjectType
     private $company = null;
 
     /**
-     * @property \Flowfact\Resources\LocationType $location
+     * @property \Flowfact\Resources\LocationType|null $location
      */
     private $location = null;
 

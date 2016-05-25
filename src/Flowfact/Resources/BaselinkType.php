@@ -17,7 +17,7 @@ class BaselinkType
     private $href = null;
 
     /**
-     * @property string $type
+     * @property string|null $type
      */
     private $type = null;
 
@@ -56,7 +56,7 @@ class BaselinkType
     /**
      * Sets a new type
      *
-     * @param string $type
+     * @param string|null $type
      * @return self
      */
     public function setType($type)

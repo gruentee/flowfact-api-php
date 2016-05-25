@@ -24,8 +24,27 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         // should return array of UserType
         $users = $this->client->getUsers();
+        $this->assertNotEmpty($users);
         foreach ($users as $user) {
             $this->assertInstanceOf($user, UserType::class);
         }
+    }
+
+
+    public function testGetUser()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        // Should throw InvalidArgumentException
+        $user = $this->client->getUser(5);
+    }
+    
+    public function testGetCharacteristics()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        // Should throw InvalidArgumentException
+        $this->client->getCharacteristics('');
+        $this->client->getCharacteristics(5);
+        $this->client->getCharacteristics('bla');
+
     }
 }

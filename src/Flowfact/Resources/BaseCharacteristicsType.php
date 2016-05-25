@@ -12,9 +12,9 @@ class BaseCharacteristicsType extends IdentifiableObjectWithModifiedAndCreatedTy
 {
 
     /**
-     * @property string $chartype
+     * @property string|null $chartype
      */
-    private $chartype = null;
+    private $type = null;
 
     /**
      * @property \Flowfact\Resources\ColorsType $colors
@@ -26,20 +26,20 @@ class BaseCharacteristicsType extends IdentifiableObjectWithModifiedAndCreatedTy
      *
      * @return string
      */
-    public function getChartype()
+    public function getType()
     {
-        return $this->chartype;
+        return $this->type;
     }
 
     /**
      * Sets a new chartype
      *
-     * @param string $chartype
+     * @param string $type
      * @return self
      */
-    public function setChartype($chartype)
+    public function setType($type)
     {
-        $this->chartype = $chartype;
+        $this->type = $type;
         return $this;
     }
 
