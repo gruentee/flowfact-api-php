@@ -16,7 +16,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         $this->client = new Client('test', '123456', '301001',
-            'https://flowfactapi.flowfact.com/com.flowfact.server/api/rest/v1.0/customers', 'xml');
+            'https://flowfactapi.flowfact.com/com.flowfact.server/api/rest/v1.0/customers', 
+            'json');
 
     }
     

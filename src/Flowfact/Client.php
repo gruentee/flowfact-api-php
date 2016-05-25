@@ -53,6 +53,15 @@ namespace Flowfact {
             $logger->pushHandler(new StreamHandler(__DIR__.'/debug.log', Logger::DEBUG));
             $this->logger = $logger;
         }
+        
+//        private function doRequest($url, $method='GET')
+//        {
+//            // TODO: maybe validate URL
+//            $response = null;
+//            try {
+//                $response = $this->request->{strtolower($method)}($url, $this->requestOptions);
+//            }
+//        }
 
         /**
          * Get a list of users
@@ -62,13 +71,15 @@ namespace Flowfact {
         {
             $url = 'users';
             $users = array();
+            // TODO: Exceptions werfen statt abfangen
             try {
                 $response = $this->client->get($url, $this->requestOptions);
                 $mapper = new \JsonMapper();
-                $mapper->setLogger($this->logger);
+                $mapper->bExceptionOnMissingData = false;
+//                $mapper->setLogger($this->logger);
                 $json = json_decode($response->getBody()->getContents());
                 // debug
-                $this->logger->addDebug('Parsing user', $json->value->user);
+//                $this->logger->addDebug('Parsing user', $json->value->user);
                 $users[] = $mapper->mapArray($json->value->user, array(), '\Flowfact\Resources\UserType');
             } catch (RequestException $e) {
                 echo Psr7\str($e->getRequest());
@@ -92,11 +103,18 @@ namespace Flowfact {
          */
         public function getUser($userId)
         {
-            // TODO: validate on RegEx
+            // TODO: validate on RegEx // UUID-1
             if(empty($userId) || !is_string($userId))
             {
                 throw new \InvalidArgumentException(__CLASS__.'::'.__FUNCTION__." requires parameter \$userId to be 
                 a string!");
+            }
+            $url = 'user/' . $userId;
+
+            try {
+                $response = $this->client->get($url, $this->requestOptions);
+            } catch (\Exception $e) {
+                
             }
 
             return;
@@ -137,6 +155,14 @@ namespace Flowfact {
 
 
         }
+    }
+
+    public function forCurrentUser($field)
+    {
+        // TODO: Struktur fluentApi überlegen
+        // TODO: für Adressen umsetzen
+        // JSON-Mapping -> andere lib?
+
     }
 }
 

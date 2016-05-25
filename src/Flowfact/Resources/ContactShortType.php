@@ -120,7 +120,7 @@ class ContactShortType extends BaseBusinessObjectType
     /**
      * Sets a new location
      *
-     * @param \Flowfact\Resources\LocationType $location
+     * @param \Flowfact\Resources\LocationType|null $location
      * @return self
      */
     public function setLocation(\Flowfact\Resources\LocationType $location)
