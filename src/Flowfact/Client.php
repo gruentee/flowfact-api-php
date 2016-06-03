@@ -29,140 +29,107 @@ namespace Flowfact {
         private $client = null;
         private $headers = array();
         private $requestOptions = array();
+        private $urlCache = array();
         private $logger = null;
 
         public function __construct($username, $password, $customerId, $baseUrl, $acceptFormat = 'json')
         {
-            // TODO: load configuration
-            // TODO: do config validation
-            $this->username = $customerId ."/" . $username;
-            $this->password = $password;
-            $this->customerId = $customerId;
-            $this->baseUrl = $baseUrl . '/' . $this->customerId . '/';
+            $this->_authenticate($username, $password, $customerId); // maybe decouple base URL construction and auth??
+            $this->baseUrl =  $baseUrl . '/' . $this->customerId . '/';
+
             $this->acceptFormat = $acceptFormat;
-            $this->requestOptions['auth'] = [$this->username, $this->password];
-            $this->requestOptions['headers'] = array(
+            $this->requestOptions['headers'] = [
                 'Accept' => 'application/' . $acceptFormat
-            );
-            // configure Guzzle
-            $this->client = new Http([
-                'base_uri' => $this->baseUrl
-            ]);
-            // set up logger
+            ];
+            $this->client = new Http(['base_uri' => $this->baseUrl]);
+            // allowed HTTP methods
+            $this->methods = [
+                'get', 'post'
+            ];
+            // DEBUG: set up logger
             $logger = new Logger('application_logger');
             $logger->pushHandler(new StreamHandler(__DIR__.'/debug.log', Logger::DEBUG));
             $this->logger = $logger;
+            $this->username = $username;
+            $this->password = $password;
+            $this->customerId = $customerId;
         }
-        
-//        private function doRequest($url, $method='GET')
-//        {
-//            // TODO: maybe validate URL
-//            $response = null;
-//            try {
-//                $response = $this->request->{strtolower($method)}($url, $this->requestOptions);
-//            }
-//        }
 
         /**
-         * Get a list of users
-         * @return UserType[]
+         * @param $username
+         * @param $password
+         * @param $customerId
          */
-        public function getUsers()
+        private function _authenticate($username, $password, $customerId)
         {
-            $url = 'users';
-            $users = array();
-            // TODO: Exceptions werfen statt abfangen
-            try {
-                $response = $this->client->get($url, $this->requestOptions);
-                $mapper = new \JsonMapper();
-                $mapper->bExceptionOnMissingData = false;
-//                $mapper->setLogger($this->logger);
-                $json = json_decode($response->getBody()->getContents());
-                // debug
-//                $this->logger->addDebug('Parsing user', $json->value->user);
-                $users[] = $mapper->mapArray($json->value->user, array(), '\Flowfact\Resources\UserType');
-            } catch (RequestException $e) {
-                echo Psr7\str($e->getRequest());
-                if ($e->hasResponse()) {
-                    echo Psr7\str($e->getResponse());
+            if(strlen($username) < 1  || !is_string($username)
+                || strlen($password) < 1 || !is_string($password))
+            {
+                throw new \InvalidArgumentException('Username and password must be strings with length > 0');
+            }
+            // TODO: handle Ümläuts 
+            $this->username = $customerId ."/" . $username;
+            $this->password = $password;
+            $this->customerId = $customerId;
+            $this->requestOptions['auth'] = [$this->username, $this->password];
+        }
+
+        /**
+         * @param $name
+         * @param $args
+         * @return $this
+         * @throws \Exception
+         */
+        public function __call($name, $args)
+        {
+            // TODO: nicht sicher, da strlen("patch") > 3
+            $method = substr(strtolower($name), 0, 3);
+            if(in_array($method, $this->methods))
+            {
+                $urlPart = strtolower(substr($name, 3));
+                // wenn get{Stuff} --> Args[0] an URL anhängen
+                if($method == 'get' && !empty($args[0]))
+                {
+                    // TODO: handle multiple args??
+                    $urlPart .=  '/' . $args[0];
                 }
-            } catch (\JsonMapper_Exception $e) {
-                echo "Mapping JSON to Entity objects failed: <br />";
-                echo $e->getMessage();
-                echo $e->getTraceAsString();
-            } finally {
-                return $users;
+                // TODO: handle arguments
+                $requestBody = ($args ? $args[0] : null);
+                // TODO: handle POST
+                $this->response = $this->makeRequest($method, $urlPart);
+                array_push($this->urlCache, $urlPart);
+                return $this;
             }
-        }
-
-        /**
-         * Get a single user
-         * @param userId string
-         * @return UserType
-         * @throws \InvalidArgumentException
-         */
-        public function getUser($userId)
-        {
-            // TODO: validate on RegEx // UUID-1
-            if(empty($userId) || !is_string($userId))
+            else
             {
-                throw new \InvalidArgumentException(__CLASS__.'::'.__FUNCTION__." requires parameter \$userId to be 
-                a string!");
+                throw new \Exception("Method not allowed");
             }
-            $url = 'user/' . $userId;
-
-            try {
-                $response = $this->client->get($url, $this->requestOptions);
-            } catch (\Exception $e) {
-                
-            }
-
-            return;
         }
 
 
-        /**
-         * Get all contacts of a given user
-         * @param userId string
-         * @return ContactType[]
-         * @throws \InvalidArgumentException
-         */
-        public function getContactsByUser($userId)
+        private function _buildUrl($url)
         {
-            // TODO: validate on RegEx
-            if(empty($userId) || !is_string($userId))
-            {
-                throw new \InvalidArgumentException(__CLASS__.'::'.__FUNCTION__." requires parameter \$userId to be 
-                a string!");
-            }
-
-
+            $cached = implode("/", $this->urlCache);
+            $url =  $cached != '' ? $cached . '/' . $url : $url;
+            return $url;
         }
-
         /**
-         *  Get Characteristics
-         * @param string|null $realm to filter the type of activities queried
-         * @throws \InvalidArgumentException
+         * @param $url URL to be requested
+         * @return Psr7\Response
          */
-        public function getCharacteristics($realm=null)
+        public function makeRequest($method, $url, $requestBody = null)
         {
-            $realms = ['activities', 'estates', 'inquiries', 'contacs'];
-            if(!is_null($realm) && !in_array($realm, $realms))
-            {
-                throw new \InvalidArgumentException(__CLASS__.'::'.__FUNCTION__.' requires parameter $realm to be 
-                empty or one of string values ' . implode(', ', $realms));
-            }
-
-
+            $url = $this->_buildUrl($url);
+            // TODO: handle POST case
+            return $this->client->{$method}($url, $this->requestOptions);
+            // TODO: map JSON to Entity objects
         }
-    }
 
-    public function forCurrentUser($field)
-    {
-        // TODO: Struktur fluentApi überlegen
-        // TODO: für Adressen umsetzen
-        // JSON-Mapping -> andere lib?
-
+        public function isValidUuid3($uuid)
+        {
+            $patternUuid3 = '/^[0-9A-F]{8}-[0-9A-F]{4}-3[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i';
+            return preg_match($patternUuid3, $uuid) == TRUE;
+        }
     }
 }
 
