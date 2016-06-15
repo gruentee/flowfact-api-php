@@ -31,6 +31,7 @@ namespace Flowfact {
         private $requestOptions = array();
         private $urlCache = array();
         private $logger = null;
+        public $response = null;
 
         public function __construct($username, $password, $customerId, $baseUrl, $acceptFormat = 'json')
         {
@@ -44,7 +45,7 @@ namespace Flowfact {
             $this->client = new Http(['base_uri' => $this->baseUrl]);
             // allowed HTTP methods
             $this->methods = [
-                'get', 'post'
+                'get', 'post', 'put'
             ];
             // DEBUG: set up logger
             $logger = new Logger('application_logger');
@@ -82,35 +83,51 @@ namespace Flowfact {
          */
         public function __call($name, $args)
         {
-            // TODO: nicht sicher, da strlen("patch") > 3
-            $method = substr(strtolower($name), 0, 3);
+            $resource = strtolower(substr($name, 3));
+            if(0 === strpos(strtolower($name), 'for'))
+            {
+                // URL bauen
+                if(!empty($args[0])) 
+                {
+                    $resource .=  '/' . $args[0];
+                }
+                array_push($this->urlCache, $resource);
+                return $this;
+            }
+            // TODO: DELETE > 3
+            // decide on HTTP method and mqke request
+            $method = strtolower(substr($name, 0, 3));
             if(in_array($method, $this->methods))
             {
-                $urlPart = strtolower(substr($name, 3));
-                // wenn get{Stuff} --> Args[0] an URL anhängen
                 if($method == 'get' && !empty($args[0]))
                 {
                     // TODO: handle multiple args??
-                    $urlPart .=  '/' . $args[0];
+                    array_push($this->urlCache, $args[0]);
                 }
                 // TODO: handle arguments
                 $requestBody = ($args ? $args[0] : null);
                 // TODO: handle POST
-                $this->response = $this->makeRequest($method, $urlPart);
-                array_push($this->urlCache, $urlPart);
+                $this->response = $this->makeRequest($method, $resource);
+                // flush cache
+                $this->urlCache = [];
                 return $this;
             }
             else
             {
-                throw new \Exception("Method not allowed");
+                throw new \Exception("Method not allowed"); // maybe change wording --> HTTP 401
             }
         }
 
 
         private function _buildUrl($url)
         {
-            $cached = implode("/", $this->urlCache);
-            $url =  $cached != '' ? $cached . '/' . $url : $url;
+            $cachedUrlStr = implode("/", $this->urlCache);
+            if(!empty($url))
+            {
+                $url =  $cachedUrlStr != '' ? $cachedUrlStr . '/' . $url : $url;
+            } else {
+                $url = $cachedUrlStr;
+            }
             return $url;
         }
         /**
@@ -125,6 +142,7 @@ namespace Flowfact {
             // TODO: map JSON to Entity objects
         }
 
+        // TODO: move elsewhere
         public function isValidUuid3($uuid)
         {
             $patternUuid3 = '/^[0-9A-F]{8}-[0-9A-F]{4}-3[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i';
