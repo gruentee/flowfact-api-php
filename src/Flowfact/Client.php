@@ -10,8 +10,6 @@
 namespace Flowfact {
 
     use Doctrine\Instantiator\Exception\InvalidArgumentException;
-    use Flowfact\Resources\ContactType;
-    use Flowfact\Resources\UserType;
     use GuzzleHttp\Client as Http;
     use GuzzleHttp\Exception\RequestException;
     use GuzzleHttp\Psr7;
@@ -30,8 +28,7 @@ namespace Flowfact {
         private $headers = array();
         private $requestOptions = array();
         private $urlCache = array();
-        private $logger = null;
-        public $response = null;
+        private $logger = null; // FOR DEBUGGING PURPOSES
 
         public function __construct($username, $password, $customerId, $baseUrl, $acceptFormat = 'json')
         {
@@ -86,7 +83,6 @@ namespace Flowfact {
             $resource = strtolower(substr($name, 3));
             if(0 === strpos(strtolower($name), 'for'))
             {
-                // URL bauen
                 if(!empty($args[0])) 
                 {
                     $resource .=  '/' . $args[0];
@@ -101,16 +97,16 @@ namespace Flowfact {
             {
                 if($method == 'get' && !empty($args[0]))
                 {
-                    // TODO: handle multiple args??
                     array_push($this->urlCache, $args[0]);
                 }
                 // TODO: handle arguments
                 $requestBody = ($args ? $args[0] : null);
                 // TODO: handle POST
-                $this->response = $this->makeRequest($method, $resource);
+                $url = $this->_buildUrl($resource);
                 // flush cache
                 $this->urlCache = [];
-                return $this;
+                return $this->makeRequest($method, $url);
+
             }
             else
             {
@@ -122,7 +118,7 @@ namespace Flowfact {
         private function _buildUrl($url)
         {
             $cachedUrlStr = implode("/", $this->urlCache);
-            if(!empty($url))
+            if(!empty($url)) // FIXME
             {
                 $url =  $cachedUrlStr != '' ? $cachedUrlStr . '/' . $url : $url;
             } else {
@@ -130,13 +126,13 @@ namespace Flowfact {
             }
             return $url;
         }
+
         /**
          * @param $url URL to be requested
          * @return Psr7\Response
          */
         public function makeRequest($method, $url, $requestBody = null)
         {
-            $url = $this->_buildUrl($url);
             // TODO: handle POST case
             return $this->client->{$method}($url, $this->requestOptions);
             // TODO: map JSON to Entity objects
@@ -147,6 +143,20 @@ namespace Flowfact {
         {
             $patternUuid3 = '/^[0-9A-F]{8}-[0-9A-F]{4}-3[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i';
             return preg_match($patternUuid3, $uuid) == TRUE;
+        }
+
+        public function map($data)
+        {
+
+            $mapper = new JsonMapper();
+            $mapper->bExceptionOnMissingData = FALSE;
+//            $mapper->setLogger($this->logger);
+            // TODO: andere JSON-Mapper-Lib oder XML
+            $json = json_decode($data);
+            $class = array_pop(explode('.', $json->declaredType));
+            $type = "\Flowfact\Resources\\" . $class;
+            include(__DIR__ . '/Resources/' . $class . '.php');
+            return $mapper->map($json->value, new $type);
         }
     }
 }
