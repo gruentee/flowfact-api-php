@@ -16,6 +16,7 @@ namespace Flowfact {
     use JsonMapper;
     use Monolog\Handler\StreamHandler;
     use Monolog\Logger;
+    use JMS\Serializer\SerializerBuilder;
 
     class Client
     {
@@ -34,11 +35,7 @@ namespace Flowfact {
         {
             $this->_authenticate($username, $password, $customerId); // maybe decouple base URL construction and auth??
             $this->baseUrl =  $baseUrl . '/' . $this->customerId . '/';
-
-            $this->acceptFormat = $acceptFormat;
-            $this->requestOptions['headers'] = [
-                'Accept' => 'application/' . $acceptFormat
-            ];
+            $this->setAcceptFormat($acceptFormat);
             $this->client = new Http(['base_uri' => $this->baseUrl]);
             // allowed HTTP methods
             $this->methods = [
@@ -80,33 +77,29 @@ namespace Flowfact {
          */
         public function __call($name, $args)
         {
+            $prefix = substr($name, 0, 3);
+            $method = $this->_getHttpVerb($name);
+            $allowedPrefixes = ['get', 'for'];
             $resource = strtolower(substr($name, 3));
-            if(0 === strpos(strtolower($name), 'for'))
+            // build URL
+            if(in_array($prefix, $allowedPrefixes) AND !empty($resource))
             {
-                if(!empty($args[0])) 
+                $this->urlCache[] = $resource;
+                if(!empty($args[0]))
                 {
-                    $resource .=  '/' . $args[0];
+                    $this->urlCache[] = $args[0];
                 }
-                array_push($this->urlCache, $resource);
                 return $this;
             }
-            // TODO: DELETE > 3
-            // decide on HTTP method and mqke request
-            $method = strtolower(substr($name, 0, 3));
-            if(in_array($method, $this->methods))
+            if(false !== $method)
             {
-                if($method == 'get' && !empty($args[0]))
-                {
-                    array_push($this->urlCache, $args[0]);
-                }
                 // TODO: handle arguments
                 $requestBody = ($args ? $args[0] : null);
                 // TODO: handle POST
-                $url = $this->_buildUrl($resource);
+                $url = $this->_buildUrl();
                 // flush cache
                 $this->urlCache = [];
-                return $this->makeRequest($method, $url);
-
+                return $this->makeRequest($method, $url, $requestBody);
             }
             else
             {
@@ -114,49 +107,98 @@ namespace Flowfact {
             }
         }
 
+        private function _getHttpVerb($call)
+        {
+            foreach($this->methods as $method)
+            {
+                if(0 === strpos(strtolower($call), $method))
+                    return $method;
+            }
+            return false;
+        }
 
-        private function _buildUrl($url)
+
+        private function _buildUrl()
         {
             $cachedUrlStr = implode("/", $this->urlCache);
-            if(!empty($url)) // FIXME
-            {
-                $url =  $cachedUrlStr != '' ? $cachedUrlStr . '/' . $url : $url;
-            } else {
-                $url = $cachedUrlStr;
-            }
-            return $url;
+            return $cachedUrlStr;
         }
 
         /**
+         * @param $method
          * @param $url URL to be requested
+         * @param null $requestBody
          * @return Psr7\Response
          */
         public function makeRequest($method, $url, $requestBody = null)
         {
-            // TODO: handle POST case
+            if(null !== $requestBody)
+            {
+                // TODO: handle XML content type
+                $this->requestOptions['json'] = $requestBody;
+            }
             return $this->client->{$method}($url, $this->requestOptions);
-            // TODO: map JSON to Entity objects
         }
-
-        // TODO: move elsewhere
-        public function isValidUuid3($uuid)
-        {
-            $patternUuid3 = '/^[0-9A-F]{8}-[0-9A-F]{4}-3[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i';
-            return preg_match($patternUuid3, $uuid) == TRUE;
-        }
-
+        
         public function map($data)
         {
+            // DI nutzen, um verschiedene Mapper einzubinden, dann $this->mapper->map($data)
+            $obj = null;
+            switch ($this->getAcceptFormat()) {
+                case 'json':
 
-            $mapper = new JsonMapper();
-            $mapper->bExceptionOnMissingData = FALSE;
-//            $mapper->setLogger($this->logger);
-            // TODO: andere JSON-Mapper-Lib oder XML
-            $json = json_decode($data);
-            $class = array_pop(explode('.', $json->declaredType));
-            $type = "\Flowfact\Resources\\" . $class;
-            include(__DIR__ . '/Resources/' . $class . '.php');
-            return $mapper->map($json->value, new $type);
+                    // Use JsonMapper
+                    $mapper = new JsonMapper();
+                    $mapper->bExceptionOnMissingData = FALSE;
+//                    $mapper->setLogger($this->logger);
+                    // TODO: andere JSON-Mapper-Lib oder XML
+                    $json = json_decode($data);
+                    $class = array_pop(explode('.', $json->declaredType));
+                    $type = "\Flowfact\Resources\\" . $class;
+                    include(__DIR__ . '/Resources/' . $class . '.php');
+                    $obj = $mapper->map($json->value, new $type);
+
+                    // use jms/serializer
+                    /*$json = json_decode($data);
+                    $class = array_pop(explode('.', $json->declaredType));
+                    // DEBUG log
+                    $type = "\Flowfact\Resources\\" . $class;
+                    $this->logger->log("debug", $type);
+                    $serializer = SerializerBuilder::create()->build();
+                    $obj = $serializer->deserialize($data, $type, 'json');*/
+                    break;
+                case 'xml':
+                    try {
+                        $obj = new \SimpleXMLElement($data);
+                        return $obj;
+                    } catch (Exception $e) {
+                        echo "Exception occurred: " . $e->getMessage();
+                        echo $e->getTraceAsString();
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return $obj;
+        }
+
+        /**
+         * @return null|string
+         */
+        public function getAcceptFormat()
+        {
+            return $this->acceptFormat;
+        }
+
+        /**
+         * @param null|string $acceptFormat
+         */
+        public function setAcceptFormat($acceptFormat)
+        {
+            $this->acceptFormat = $acceptFormat;
+            $this->requestOptions['headers'] = [
+                'Accept' => 'application/' . $acceptFormat
+            ];
         }
     }
 }
