@@ -2,6 +2,7 @@
   "name": "gruentee/flowfact-api-php",
   "description": "A simple wrapper around the FLOWFACT API, featuring a fluent interface",
   "version": "0.1",
+  "license": "MIT",
   "require": {
     "guzzlehttp/guzzle": "~6.0",
     "netresearch/jsonmapper": "v0.11.0",
