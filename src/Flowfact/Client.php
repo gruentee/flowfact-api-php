@@ -9,7 +9,6 @@
 
 namespace Flowfact {
 
-    use Doctrine\Instantiator\Exception\InvalidArgumentException;
     use GuzzleHttp\Client as Http;
     use GuzzleHttp\Exception\RequestException;
     use GuzzleHttp\Psr7;
@@ -54,6 +53,7 @@ namespace Flowfact {
          * @param $username
          * @param $password
          * @param $customerId
+         * @throws \InvalidArgumentException
          */
         private function _authenticate($username, $password, $customerId)
         {
@@ -93,9 +93,7 @@ namespace Flowfact {
             }
             if(false !== $method)
             {
-                // TODO: handle arguments
                 $requestBody = ($args ? $args[0] : null);
-                // TODO: handle POST
                 $url = $this->_buildUrl();
                 // flush cache
                 $this->urlCache = [];
@@ -152,20 +150,21 @@ namespace Flowfact {
                     $mapper->bExceptionOnMissingData = FALSE;
 //                    $mapper->setLogger($this->logger);
                     // TODO: andere JSON-Mapper-Lib oder XML
-                    $json = json_decode($data);
+                    // cweiske/jsonmapper
+/*                    $json = json_decode($data);
                     $class = array_pop(explode('.', $json->declaredType));
                     $type = "\Flowfact\Resources\\" . $class;
                     include(__DIR__ . '/Resources/' . $class . '.php');
-                    $obj = $mapper->map($json->value, new $type);
+                    $obj = $mapper->map($json->value, new $type);*/
 
                     // use jms/serializer
-                    /*$json = json_decode($data);
+                    $json = json_decode($data);
                     $class = array_pop(explode('.', $json->declaredType));
                     // DEBUG log
-                    $type = "\Flowfact\Resources\\" . $class;
+                    $type = "Flowfact\Resources\\" . $class;
                     $this->logger->log("debug", $type);
                     $serializer = SerializerBuilder::create()->build();
-                    $obj = $serializer->deserialize($data, $type, 'json');*/
+                    $obj = $serializer->deserialize($data, $type, 'json');
                     break;
                 case 'xml':
                     try {

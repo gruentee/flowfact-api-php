@@ -69,11 +69,19 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('201', $resp->getStatusCode());
     }
 
-    public function testMap() {
+    public function testMapXml() {
         $this->client->setAcceptFormat('xml');
         $resp = $this->client->forUsers("AAC94B33-01F8-3783-B597-AE7456DF1B78")
             ->forContacts()
             ->get();
         $this->assertInstanceOf(\SimpleXMLElement::class, $this->client->map($resp->getBody()->getContents()));
+    }
+
+    public function testMapJson() {
+        $this->client->setAcceptFormat('json');
+        $resp = $this->client->forUsers("AAC94B33-01F8-3783-B597-AE7456DF1B78")
+            ->forContacts()
+            ->get();
+
     }
 }
