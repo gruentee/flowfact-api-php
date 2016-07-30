@@ -1,21 +1,12 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: connzen
- * Date: 18.05.16
- * Time: 15:55
- */
-
 
 namespace Flowfact {
 
     use GuzzleHttp\Client as Http;
     use GuzzleHttp\Exception\RequestException;
     use GuzzleHttp\Psr7;
-    use JsonMapper;
     use Monolog\Handler\StreamHandler;
     use Monolog\Logger;
-    use JMS\Serializer\SerializerBuilder;
 
     class Client
     {
@@ -136,49 +127,6 @@ namespace Flowfact {
                 $this->requestOptions['json'] = $requestBody;
             }
             return $this->client->{$method}($url, $this->requestOptions);
-        }
-        
-        public function map($data)
-        {
-            // DI nutzen, um verschiedene Mapper einzubinden, dann $this->mapper->map($data)
-            $obj = null;
-            switch ($this->getAcceptFormat()) {
-                case 'json':
-
-                    // Use JsonMapper
-                    $mapper = new JsonMapper();
-                    $mapper->bExceptionOnMissingData = FALSE;
-//                    $mapper->setLogger($this->logger);
-                    // TODO: andere JSON-Mapper-Lib oder XML
-                    // cweiske/jsonmapper
-/*                    $json = json_decode($data);
-                    $class = array_pop(explode('.', $json->declaredType));
-                    $type = "\Flowfact\Resources\\" . $class;
-                    include(__DIR__ . '/Resources/' . $class . '.php');
-                    $obj = $mapper->map($json->value, new $type);*/
-
-                    // use jms/serializer
-                    $json = json_decode($data);
-                    $class = array_pop(explode('.', $json->declaredType));
-                    // DEBUG log
-                    $type = "Flowfact\Resources\\" . $class;
-                    $this->logger->log("debug", $type);
-                    $serializer = SerializerBuilder::create()->build();
-                    $obj = $serializer->deserialize($data, $type, 'json');
-                    break;
-                case 'xml':
-                    try {
-                        $obj = new \SimpleXMLElement($data);
-                        return $obj;
-                    } catch (Exception $e) {
-                        echo "Exception occurred: " . $e->getMessage();
-                        echo $e->getTraceAsString();
-                    }
-                    break;
-                default:
-                    break;
-            }
-            return $obj;
         }
 
         /**
