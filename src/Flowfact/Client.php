@@ -19,11 +19,11 @@ namespace Flowfact {
         private $headers = array();
         private $requestOptions = array();
         private $urlCache = array();
-        private $logger = null; // FOR DEBUGGING PURPOSES
+        private $logger = null;
 
         public function __construct($username, $password, $customerId, $baseUrl, $acceptFormat = 'json')
         {
-            $this->_authenticate($username, $password, $customerId); // maybe decouple base URL construction and auth??
+            $this->_authenticate($username, $password, $customerId);
             $this->baseUrl =  $baseUrl . '/' . $this->customerId . '/';
             $this->setAcceptFormat($acceptFormat);
             $this->client = new Http(['base_uri' => $this->baseUrl]);
@@ -31,7 +31,6 @@ namespace Flowfact {
             $this->methods = [
                 'get', 'post', 'put'
             ];
-            // DEBUG: set up logger
             $logger = new Logger('application_logger');
             $logger->pushHandler(new StreamHandler(__DIR__.'/debug.log', Logger::DEBUG));
             $this->logger = $logger;
@@ -92,7 +91,7 @@ namespace Flowfact {
             }
             else
             {
-                throw new \Exception("Method not allowed"); // maybe change wording --> HTTP 401
+                throw new \Exception("Method not allowed");
             }
         }
 
@@ -123,7 +122,6 @@ namespace Flowfact {
         {
             if(null !== $requestBody)
             {
-                // TODO: handle XML content type
                 $this->requestOptions['json'] = $requestBody;
             }
             return $this->client->{$method}($url, $this->requestOptions);
