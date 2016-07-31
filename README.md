@@ -15,6 +15,7 @@ goes for adding query parameters.
 The request is finally made by calling an HTTP method at the end of the chain. 
 ```php
 // install via Composer
+composer require gruentee/flowfact-api-php
 
 // initialize client
 $client = new Client('USERNAME', 'PASSWORD', 'CUSTOMER_ID', 'https://api.baseurl.tld/');
