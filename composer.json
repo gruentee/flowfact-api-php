@@ -1,8 +1,17 @@
 {
   "name": "gruentee/flowfact-api-php",
   "description": "A simple wrapper around the FLOWFACT API, featuring a fluent interface",
-  "version": "0.1",
+  "keywords": ["API", "wrapper", "REST", "FLOWFACT"],
+  "homepage": "https://github.com/gruentee/flowfact-api-php",
   "license": "MIT",
+  "authors": [
+    {
+      "name": "Constantin Kraft",
+      "email": "ckraft@smail.uni-koeln.de",
+      "homepage": "https://websolutions.koeln",
+      "role": "Developer"
+    }
+  ],
   "require": {
     "guzzlehttp/guzzle": "~6.0",
     "netresearch/jsonmapper": "v0.11.0",
