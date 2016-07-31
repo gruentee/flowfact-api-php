@@ -6,7 +6,7 @@
 * Features a fluent interface for building HTTP queries: build any resource path via dynamic method calls
 * Returns HTTP responses according to [PSR-7](http://www.php-fig.org/psr/psr-7/)
 
-## Usage example
+##Usage example
 Building resource paths (ie. `/users/<UUID>/contacs/<UUID>`) through chaining method calls with the name of the 
 desired resource prefixed by either `for` or `get`. Single resources can be specified by passing the identifier as an
  argument to the call denoting the resource, same goes for adding query parameters. 
@@ -38,13 +38,14 @@ $resp = $client->forUsers('AAC94B33-01F8-3783-B597-AE7456DF1B78')
  
  
  ##TODO
+ 
  * Map XML and JSON responses to PHP classes corresponding to response models
  
- ### Thanks
+ ###Thanks
  Idea of intercepting method calls borrowed from [sendgrid/php-http-client](https://github
  .com/sendgrid/php-http-client/). :thumbsup:
  
- # About
+ #About
  ![FLOWFACT logo](https://www.flowfact.de/fileadmin/img/flowfact_logo_v2.png)
  ![ProfessionalCenter Logo](http://www.professionalcenter.uni-koeln.de/skin/proc_logo_head-neu.jpg)
  
