@@ -3,7 +3,6 @@
 namespace Flowfact {
 
     use GuzzleHttp\Client as Http;
-    use GuzzleHttp\Exception\RequestException;
     use GuzzleHttp\Psr7;
     use Monolog\Handler\StreamHandler;
     use Monolog\Logger;
